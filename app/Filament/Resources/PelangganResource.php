@@ -2,16 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\PelangganResource\Pages;
-use App\Filament\Resources\PelangganResource\RelationManagers;
-use App\Models\Pelanggan;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
+use App\Models\Pelanggan;
 use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\PelangganResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\PelangganResource\RelationManagers;
 
 class PelangganResource extends Resource
 {
@@ -48,6 +50,17 @@ class PelangganResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('pdf') 
+                    ->label('PDF')
+                    ->color('success')
+                    ->icon('heroicon-o-document-text')
+                    ->action(function (Pelanggan $record) {
+                        return response()->streamDownload(function () use ($record) {
+                            echo Pdf::loadHtml(
+                                Blade::render('Pelanggan', ['record' => $record])
+                            )->stream();
+                        }, $record->nama . '.pdf');
+                    }), 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

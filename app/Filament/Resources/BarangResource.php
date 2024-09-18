@@ -18,6 +18,8 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use App\Filament\Resources\BarangResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\BarangResource\RelationManagers;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Blade;
 
 class BarangResource extends Resource
 {
@@ -60,12 +62,24 @@ class BarangResource extends Resource
                 ->searchable(),
                 TextColumn::make('stok')->searchable(),
                 TextColumn::make('satuan'),
+
             ])
             ->filters([
                 //
             ])
             ->actions([
                 EditAction::make(),
+                Tables\Actions\Action::make('pdf') 
+                ->label('PDF')
+                ->color('success')
+                ->icon('heroicon-o-document-text')
+                ->action(function (Barang $record) {
+                    return response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadHtml(
+                            Blade::render('barang', ['record' => $record])
+                        )->stream();
+                    }, $record->kode . '.pdf');
+                }), 
             ])
             ->bulkActions([
                BulkActionGroup::make([

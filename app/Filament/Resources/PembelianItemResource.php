@@ -10,8 +10,10 @@ use Filament\Forms\Form;
 use App\Models\Pembelian;
 use Filament\Tables\Table;
 use App\Models\PembelianItem;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Grid;
+use Illuminate\Support\Facades\Blade;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -122,6 +124,17 @@ class PembelianItemResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('pdf') 
+                ->label('PDF')
+                ->color('success')
+                ->icon('heroicon-o-document-text')
+                ->action(function (Pembelian $record) {
+                    return response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadHtml(
+                            Blade::render('Items', ['record' => $record])
+                        )->stream();
+                    }, $record->tanggal . '.pdf');
+                }), 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

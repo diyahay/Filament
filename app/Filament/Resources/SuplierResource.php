@@ -2,16 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SuplierResource\Pages;
-use App\Filament\Resources\SuplierResource\RelationManagers;
-use App\Models\Suplier;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Suplier;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\SuplierResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\SuplierResource\RelationManagers;
 
 class SuplierResource extends Resource
 {
@@ -60,6 +62,17 @@ class SuplierResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('pdf') 
+                ->label('PDF')
+                ->color('success')
+                ->icon('heroicon-o-document-text')
+                ->action(function (Suplier $record) {
+                    return response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadHtml(
+                            Blade::render('suplier', ['record' => $record])
+                        )->stream();
+                    }, $record->nama_perusahaan . '.pdf');
+                }), 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

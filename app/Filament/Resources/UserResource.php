@@ -2,16 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
-use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use App\Models\User;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\UserResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\UserResource\RelationManagers;
 
 class UserResource extends Resource
 {
@@ -60,6 +62,17 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('pdf') 
+                ->label('PDF')
+                ->color('success')
+                ->icon('heroicon-o-document-text')
+                ->action(function (User $record) {
+                    return response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadHtml(
+                            Blade::render('user', ['record' => $record])
+                        )->stream();
+                    }, $record->name . '.pdf');
+                }), 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -4,18 +4,20 @@ namespace App\Filament\Resources;
 
 use Filament\Forms;
 use Filament\Tables;
+use App\Models\Suplier;
 use Filament\Forms\Set;
 use Filament\Forms\Form;
 use App\Models\Pembelian;
 use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Resources\Resource;
+use Filament\Forms\FormsComponent;
+use Illuminate\Support\Facades\Blade;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\PembelianResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PembelianResource\RelationManagers;
-use App\Models\Suplier;
-use Filament\Forms\FormsComponent;
-use Filament\Tables\Columns\TextColumn;
 
 class PembelianResource extends Resource
 {
@@ -63,12 +65,24 @@ class PembelianResource extends Resource
                     ->label('Nama Penghubung'),
                 TextColumn::make('tanggal')->dateTime('d F Y')
                      ->label('Tanggal Pembelian'),
+                     //->formatStateUsing(fn (string $state): string => \Carbon\Carbon::parse($state)->format('d F Y')),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('pdf') 
+                ->label('PDF')
+                ->color('success')
+                ->icon('heroicon-o-document-text')
+                ->action(function (Pembelian $record) {
+                    return response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadHtml(
+                            Blade::render('pembelian', ['record' => $record])
+                        )->stream();
+                    }, $record->tanggal . '.pdf');
+                }), 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
